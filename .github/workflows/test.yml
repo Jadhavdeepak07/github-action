@@ -12,6 +12,11 @@ jobs:
     name: Terraform Plan
     runs-on: ubuntu-latest
 
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KE }}
+      AWS_DEFAULT_REGION: us-east-1
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
@@ -21,12 +26,20 @@ jobs:
         with:
           terraform_version: 1.9.8
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KE }}
-          aws-region: us-east-1
+      - name: Check AWS Credentials
+        shell: bash
+        run: |
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+            echo "AWS_ACCESS_KEY_ID is missing"
+            exit 1
+          fi
+
+          if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "AWS_SECRET_ACCESS_KEY is missing"
+            exit 1
+          fi
+
+          echo "AWS credentials are present"
 
       - name: Verify AWS Identity
         run: aws sts get-caller-identity
@@ -58,6 +71,11 @@ jobs:
     environment:
       name: production
 
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KE }}
+      AWS_DEFAULT_REGION: us-east-1
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
@@ -66,13 +84,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KE }}
-          aws-region: us-east-1
 
       - name: Verify AWS Identity
         run: aws sts get-caller-identity
